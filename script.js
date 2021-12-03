@@ -121,13 +121,6 @@ scene.background = textureSun;
  plane.receiveShadow = true;
  scene.add(plane);
 
-
-let plane = new THREE.Mesh(grassPlane, grassMaterial);
-plane.rotation.x = Math.PI / 2;
-plane.position.y = -5.5;
-plane.receiveShadow = true;
-scene.add(plane);
-
 /**
  * Object: GLTF
  */
