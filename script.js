@@ -1,6 +1,7 @@
 import * as THREE from './js/three.module.js';
 import { OrbitControls } from './js/OrbitControls.js';
 import { GLTFLoader } from './js/GLTFLoader.js';
+import { Reflector } from './jsm/objects/Reflector.js';
 import * as dat from './jsm/libs/dat.gui.module.js'
 import { DragControls } from './js/DragControls.js';
 
@@ -98,40 +99,86 @@ renderer.gammaOutput = true;
  */
 const panorama = new THREE.CubeTextureLoader();
 const textureSun = panorama.load([
-    './assets/trance_ft.jpg', './assets/trance_bk.jpg',
-    './assets/trance_up.jpg', './assets/trance_dn.jpg',
-    './assets/trance_rt.jpg', './assets/trance_lf.jpg'
-  ]);
+    'sky-map/px.jpg',
+    'sky-map/nx.jpg',
+    'sky-map/py.jpg',
+    'sky-map/ny.jpg',
+    'sky-map/pz.jpg',
+    'sky-map/nz.jpg',
+
+]);
 scene.background = textureSun;
 
+
+/**
+ * Object: Sphere (for Sun)
+ 
+let geometry = new THREE.SphereGeometry(1.54, 10, 10);
+const loader3 = new THREE.TextureLoader();
+loader3.load('img/sunmap.jpg', (sun) => {
+    const material = new THREE.MeshBasicMaterial({
+        map: sun,
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.x = 20;
+    sphere.position.z = -20;
+    sphere.position.y = 20;
+    scene.add(sphere);
+
+});
+*/
 /**
  * Object: Plane
  */
 
- const loaderPlane = new THREE.TextureLoader();
- const plane = new THREE.Mesh(
-   new THREE.PlaneGeometry(100, 100, 50, 50),
-   new THREE.MeshPhongMaterial({
-     color: 0xffffff,
-     map: loaderPlane.load('./assets/rumput.jfif')
-     })
- );
- plane.rotation.x = -Math.PI*0.5;
- plane.position.set(0, 0, 0);
- plane.receiveShadow = true;
- scene.add(plane);
+const loader4 = new THREE.TextureLoader();
+const grass = loader4.load('grass.jpg');
+grass.wrapS = THREE.RepeatWrapping;
+grass.wrapT = THREE.RepeatWrapping;
+const repeats = 10;
+grass.repeat.set(repeats, repeats);
+
+let grassPlane = new THREE.BoxGeometry(40, 40);
+let grassMaterial = new THREE.MeshLambertMaterial({
+    map: grass
+
+});
+
+
+let plane = new THREE.Mesh(grassPlane, grassMaterial);
+plane.rotation.x = Math.PI / 2;
+plane.position.y = -5.5;
+plane.receiveShadow = true;
+scene.add(plane);
 
 /**
  * Object: GLTF
  */
 
+const loader = new GLTFLoader()
+loader.load('./model/scene.gltf', function(gltf) {
+    const root = gltf.scene;
+    root.position.x = 0;
+    root.position.y = -5;
+    scene.add(root);
+    // console.log(dumpObject(root).join('\n'));
+
+    root.traverse(n => {
+        if (n.isMesh) {
+            n.castShadow = true;
+            n.receiveShadow = true;
+        }
+    });
+
+})
 
 const loader2 = new GLTFLoader()
-loader2.load('./assets/scene.gltf', function(gltf) {
+loader2.load('./model/scene.gltf', function(gltf) {
     const root = gltf.scene;
     root.position.x = 0;
     root.position.y = 15;
     scene.add(root);
+    // console.log(dumpObject(root).join('\n'));
 
     root.traverse(n => {
         if (n.isMesh) {
@@ -146,29 +193,29 @@ loader2.load('./assets/scene.gltf', function(gltf) {
 /**
  * Lights
  */
- const pointLight = new THREE.PointLight(0xffffff);
- pointLight.position.set(-100, 200, 100);
- scene.add(pointLight);
+const pointLight = new THREE.PointLight(0xffffff);
+pointLight.position.set(-100, 200, 100);
+scene.add(pointLight);
 
- const ambientLight = new THREE.AmbientLight(0x000000);
- scene.add(ambientLight);
+const ambientLight = new THREE.AmbientLight(0x000000);
+scene.add(ambientLight);
 
- const directionalLight = new THREE.DirectionalLight();
- directionalLight.position.set(-600, 500, 500);
- directionalLight.castShadow = true;
- directionalLight.intensity = 2;
- directionalLight.shadow.mapSize.width = 1024;
- directionalLight.shadow.mapSize.height = 1024;
- directionalLight.shadow.camera.near = 250;
- directionalLight.shadow.camera.far = 1000;
+const directionalLight = new THREE.DirectionalLight();
+directionalLight.position.set(500, 500, -500);
+directionalLight.castShadow = true;
+directionalLight.intensity = 2;
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+directionalLight.shadow.camera.near = 250;
+directionalLight.shadow.camera.far = 1000;
 
- const intensity = 50;
+let intensity = 50;
 
- directionalLight.shadow.camera.left = -intensity;
- directionalLight.shadow.camera.right = intensity;
- directionalLight.shadow.camera.top = intensity;
- directionalLight.shadow.camera.bottom = -intensity;
- scene.add(directionalLight);
+directionalLight.shadow.camera.left = -intensity;
+directionalLight.shadow.camera.right = intensity;
+directionalLight.shadow.camera.top = intensity;
+directionalLight.shadow.camera.bottom = -intensity;
+scene.add(directionalLight);
 
 // directional light helper
 const directionalLightFolder = gui.addFolder('Directional Light');
@@ -183,10 +230,10 @@ directionalLightFolder.add(directionalLight, 'intensity').min(0).max(10).step(0.
  * Fog
  */
 
- const color = 0xffffff;
- const near = 90;
- const far = 160;
- scene.fog = new THREE.Fog(color, near, far);
+const near = 20;
+const far = 70;
+const color = 'lightgreen';
+scene.fog = new THREE.Fog(color, near, far);
 
 // fog helper
 const fogGUIHelper = new FogGUIHelper(scene.fog, scene.background);
@@ -234,6 +281,20 @@ dragControls.addEventListener('dragend', function() { controls.enabled = true; }
 
 renderer.render(scene, camera, dragControls);
 
+/**
+ * Object: Mirror
+ */
+
+let planeMirror = new THREE.PlaneGeometry(40, 20);
+const verticalMirror = new Reflector(planeMirror, {
+    clipBias: 0.003,
+    textureWidth: window.innerWidth * window.devicePixelRatio,
+    textureHeight: window.innerHeight * window.devicePixelRatio,
+    color: 0x889999
+});
+verticalMirror.position.y = 5.5;
+verticalMirror.position.z = -20;
+scene.add(verticalMirror);
 
 /**
  * Animate
