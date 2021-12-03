@@ -108,18 +108,18 @@ scene.background = textureSun;
  * Object: Plane
  */
 
- const loaderPlane = new THREE.TextureLoader();
- const plane = new THREE.Mesh(
-   new THREE.PlaneGeometry(100, 100, 50, 50),
-   new THREE.MeshPhongMaterial({
-     color: 0xffffff,
-     map: loaderPlane.load('./assets/rumput.jfif')
-     })
- );
- plane.rotation.x = -Math.PI*0.5;
- plane.position.set(0, 0, 0);
- plane.receiveShadow = true;
- scene.add(plane);
+const loaderPlane = new THREE.TextureLoader();
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100, 50, 50),
+    new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      map: loaderPlane.load('./assets/rumput.jfif')
+      })
+  );
+  plane.rotation.x = -Math.PI*0.5;
+  plane.position.set(0, 0, 0);
+  plane.receiveShadow = true;
+  scene.add(plane);
 
 
 /**
@@ -171,6 +171,15 @@ loader2.load('./assets/scene.gltf', function(gltf) {
  directionalLight.shadow.camera.bottom = -intensity;
  scene.add(directionalLight);
 
+// directional light helper
+const directionalLightFolder = gui.addFolder('Directional Light');
+directionalLightFolder.add(directionalLight, 'visible');
+directionalLightFolder.add(directionalLight.position, 'x').min(-500).max(500).step(10);
+directionalLightFolder.add(directionalLight.position, 'y').min(-500).max(500).step(10);
+directionalLightFolder.add(directionalLight.position, 'z').min(-500).max(500).step(10);
+directionalLightFolder.add(directionalLight, 'intensity').min(0).max(10).step(0.1);
+
+
 /**
  * Fog
  */
@@ -180,20 +189,27 @@ loader2.load('./assets/scene.gltf', function(gltf) {
  const far = 160;
  scene.fog = new THREE.Fog(color, near, far);
 
+// fog helper
+const fogGUIHelper = new FogGUIHelper(scene.fog, scene.background);
+gui.add(fogGUIHelper, 'near', near, far).listen();
+gui.add(fogGUIHelper, 'far', near, far).listen();
+gui.addColor(fogGUIHelper, 'color');
+
 /**
  * Object: Reflective Sphere
  */
- sphereCamera = new THREE.CubeCamera(1,1000,500);
- sphereCamera.position.set(0,300,0);
- scene.add(sphereCamera);
-
- const sphereMaterial = new THREE.MeshBasicMaterial({
-   envMap: sphereCamera.renderTarget
- });
- const sphereGeo = new THREE.SphereGeometry(10,50,50);
- const sphere = new THREE.Mesh(sphereGeo,sphereMaterial);
- sphere.position.set(0,50,0);
- scene.add(sphere);
+const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(128, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+let sphereCamera = new THREE.CubeCamera(1, 500, cubeRenderTarget);
+sphereCamera.position.set(-3, 3, 0);
+scene.add(sphereCamera);
+const sphereMirror = new THREE.MeshBasicMaterial({
+    envMap: sphereCamera.renderTarget.texture,
+});
+const sphereGeo = new THREE.SphereGeometry(1.5, 32, 16);
+const mirrorBall = new THREE.Mesh(sphereGeo, sphereMirror);
+mirrorBall.position.y = 3;
+mirrorBall.position.x = -3;
+scene.add(mirrorBall);
 
 /**
  * Drag Controls
