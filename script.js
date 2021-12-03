@@ -4,6 +4,34 @@ import { GLTFLoader } from './js/GLTFLoader.js';
 import * as dat from './jsm/libs/dat.gui.module.js'
 import { DragControls } from './js/DragControls.js';
 
+class FogGUIHelper {
+    constructor(fog, backgroundColor) {
+        this.fog = fog;
+        this.backgroundColor = backgroundColor;
+    }
+    get near() {
+        return this.fog.near;
+    }
+    set near(v) {
+        this.fog.near = v;
+        this.fog.far = Math.max(this.fog.far, v);
+    }
+    get far() {
+        return this.fog.far;
+    }
+    set far(v) {
+        this.fog.far = v;
+        this.fog.near = Math.min(this.fog.near, v);
+    }
+    get color() {
+        return `#${this.fog.color.getHexString()}`;
+    }
+    set color(hexString) {
+        this.fog.color.set(hexString);
+        this.backgroundColor.set(hexString);
+    }
+}
+
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -155,18 +183,17 @@ loader2.load('./assets/scene.gltf', function(gltf) {
 /**
  * Object: Reflective Sphere
  */
-const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(128, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
-let sphereCamera = new THREE.CubeCamera(1, 500, cubeRenderTarget);
-sphereCamera.position.set(-3, 3, 0);
-scene.add(sphereCamera);
-const sphereMirror = new THREE.MeshBasicMaterial({
-    envMap: sphereCamera.renderTarget.texture,
-});
-const sphereGeo = new THREE.SphereGeometry(1.5, 32, 16);
-const mirrorBall = new THREE.Mesh(sphereGeo, sphereMirror);
-mirrorBall.position.y = 3;
-mirrorBall.position.x = -3;
-scene.add(mirrorBall);
+ sphereCamera = new THREE.CubeCamera(1,1000,500);
+ sphereCamera.position.set(0,300,0);
+ scene.add(sphereCamera);
+
+ const sphereMaterial = new THREE.MeshBasicMaterial({
+   envMap: sphereCamera.renderTarget
+ });
+ const sphereGeo = new THREE.SphereGeometry(10,50,50);
+ const sphere = new THREE.Mesh(sphereGeo,sphereMaterial);
+ sphere.position.set(0,50,0);
+ scene.add(sphere);
 
 /**
  * Drag Controls
